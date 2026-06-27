@@ -13,8 +13,6 @@ const navItems = [
   ["science", "Test Gen", "analysis", false],
 ];
 
-const activityBars = [36, 58, 42, 76, 54, 84, 62, 70, 92, 68, 48, 78];
-
 function Home() {
   const [activeView, setActiveView] = useState("dashboard");
   const [repository, setRepository] = useState(null);
@@ -256,6 +254,7 @@ function DashboardView({
   suspects,
 }) {
   const latestRun = history[0];
+  const activityData = buildActivityData(history);
 
   return (
     <main className="content-canvas">
@@ -286,14 +285,31 @@ function DashboardView({
                   <span className="material-symbols-outlined">monitoring</span>
                   Analysis Activity
                 </h3>
-                <p>{history.length ? "Recent local runs" : "Activity appears after the first run"}</p>
+                <p>{history.length ? "Each bar is a recent analysis, scaled by suspicious functions found" : "Activity appears after the first run"}</p>
               </div>
             </div>
-            <div className="bar-chart" aria-hidden="true">
-              {activityBars.map((height, index) => (
-                <span key={index} style={{ "--height": `${height}%` }} />
-              ))}
-            </div>
+            {activityData.length ? (
+              <div className="activity-chart" aria-label="Recent analysis activity">
+                {activityData.map((item) => (
+                  <div className="activity-bar-item" key={item.id}>
+                    <div className="activity-bar-track">
+                      <span
+                        className="activity-bar-fill"
+                        style={{ "--height": `${item.height}%` }}
+                        title={`${item.label}: ${item.suspects} suspicious functions`}
+                      />
+                    </div>
+                    <span className="activity-bar-label">{item.shortLabel}</span>
+                    <strong>{item.suspects}</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state inline">
+                <span className="material-symbols-outlined">monitoring</span>
+                <p>Run an analysis to start building the activity chart.</p>
+              </div>
+            )}
           </section>
 
           <section className="panel">
@@ -742,6 +758,28 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function buildActivityData(history) {
+  const recentRuns = history.slice(0, 12).reverse();
+  const maxSuspects = Math.max(...recentRuns.map((run) => run.suspects?.length || 0), 1);
+
+  return recentRuns.map((run, index) => {
+    const suspects = run.suspects?.length || 0;
+    const date = run.createdAt ? new Date(run.createdAt) : null;
+    const shortLabel = date
+      ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date)
+      : `Run ${index + 1}`;
+    const label = run.title || run.repositoryName || shortLabel;
+
+    return {
+      id: run.id || `${run.createdAt}-${index}`,
+      height: Math.max((suspects / maxSuspects) * 100, suspects ? 12 : 4),
+      label,
+      shortLabel,
+      suspects,
+    };
+  });
 }
 
 function loadSavedHistory() {

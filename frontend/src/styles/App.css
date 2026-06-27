@@ -749,7 +749,8 @@ button:disabled {
   min-height: 248px;
 }
 
-.bar-chart {
+.bar-chart,
+.activity-chart {
   align-items: end;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -767,6 +768,58 @@ button:disabled {
   flex: 1;
   height: var(--height);
   min-width: 10px;
+}
+
+.activity-chart {
+  align-items: stretch;
+  height: 212px;
+  padding: 12px 12px 10px;
+}
+
+.activity-bar-item {
+  align-items: center;
+  color: var(--muted);
+  display: grid;
+  flex: 1;
+  gap: 6px;
+  grid-template-rows: 1fr auto auto;
+  min-width: 26px;
+  text-align: center;
+}
+
+.activity-bar-track {
+  align-items: end;
+  background: rgba(52, 52, 61, 0.45);
+  border: 1px solid rgba(70, 69, 84, 0.42);
+  border-radius: 5px;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+.activity-bar-fill {
+  background: linear-gradient(180deg, var(--secondary), rgba(76, 215, 246, 0.16));
+  border-radius: 4px 4px 0 0;
+  display: block;
+  height: var(--height);
+  width: 100%;
+}
+
+.activity-bar-label {
+  color: var(--quiet);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.activity-bar-item strong {
+  color: var(--text);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1;
 }
 
 .diagnosis-content {
