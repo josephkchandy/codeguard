@@ -64,11 +64,6 @@ function Home() {
       return;
     }
 
-    if (!bugReport.trim()) {
-      setError("Add diagnostic context before starting analysis.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("repository", repository);
     formData.append("bug_report", [analysisTitle, bugReport].filter(Boolean).join("\n\n"));
@@ -95,7 +90,7 @@ function Home() {
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
         title: analysisTitle || repositoryName,
         repositoryName,
-        bugReport,
+        bugReport: bugReport || "Autonomous repository scan",
         errorLog,
         summary: nextSummary,
         suspects: nextSuspects,
@@ -477,7 +472,7 @@ function AnalysisView({
             <label htmlFor="bug-report">Diagnostic Context</label>
             <textarea
               id="bug-report"
-              placeholder="Describe the failing behavior, endpoint, function, or user flow."
+              placeholder="Optional. Leave blank to run an autonomous repository risk scan."
               rows="5"
               value={bugReport}
               onChange={(event) => setBugReport(event.target.value)}

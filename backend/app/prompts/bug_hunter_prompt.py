@@ -15,6 +15,10 @@ Bug Report:
 Error Log:
 {error_log}
 
+Mode:
+If Bug Report and Error Log are blank, run Autonomous Scan Mode:
+rank functions by likely defect risk instead of matching a specific failure.
+
 Candidate functions from static tools:
 {candidates}
 
@@ -47,4 +51,7 @@ Rules:
 - Each suspect must include a concise evidence-based reason.
 - Prefer functions directly mentioned by stack traces, error logs, endpoints,
   file paths, or domain terms in the bug report.
+- In Autonomous Scan Mode, prioritize entrypoints, input validation,
+  database/file/network operations, security-sensitive functions, broad
+  exception handling, and complex control flow.
 """

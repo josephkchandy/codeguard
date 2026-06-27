@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api")
 @router.post("/analyze")
 async def analyze(
     repository: UploadFile = File(...),
-    bug_report: str = Form(...),
+    bug_report: str = Form(""),
     error_log: str = Form("")
 ):
 

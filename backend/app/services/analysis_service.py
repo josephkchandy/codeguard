@@ -6,6 +6,12 @@ class AnalysisService:
 
     @staticmethod
     def analyze(zip_bytes, bug_report, error_log):
+        normalized_bug_report = bug_report.strip() or (
+            "Autonomous Scan Mode: no diagnostic context was provided. "
+            "Scan the repository for likely defect risks and suspicious code."
+        )
+
+        normalized_error_log = error_log.strip()
 
         # Extract uploaded repository
         temp_dir, repo_path = ZipTools.extract_repository(zip_bytes)
@@ -15,8 +21,8 @@ class AnalysisService:
             # Initial LangGraph state
             state = {
                 "repo_path": str(repo_path),
-                "bug_report": bug_report,
-                "error_log": error_log,
+                "bug_report": normalized_bug_report,
+                "error_log": normalized_error_log,
                 "python_files": [],
                 "repository_map": {},
                 "scanner_intelligence": {},

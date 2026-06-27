@@ -16,6 +16,11 @@ Bug Report:
 Error Log:
 {error_log}
 
+Mode:
+If Bug Report and Error Log are blank, run Autonomous Scan Mode:
+summarize repository architecture and identify likely risk areas without
+assuming a specific user-reported failure.
+
 Repository Structure Summary:
 {repository_summary}
 
@@ -38,4 +43,6 @@ Rules:
 - Base conclusions only on the provided repository map.
 - If framework evidence is weak, say "Unknown" rather than guessing.
 - Keep values concise and useful for a debugging workflow.
+- In Autonomous Scan Mode, focus on risky files, entrypoints, validation,
+  persistence, authentication, networking, and error handling.
 """

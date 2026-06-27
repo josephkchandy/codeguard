@@ -16,6 +16,11 @@ Bug Report:
 Error Log:
 {error_log}
 
+Mode:
+If Bug Report and Error Log are blank, run Autonomous Scan Mode:
+explain the most plausible defect risk in the selected suspect instead of
+claiming a specific observed bug.
+
 These are the most suspicious functions from the Bug Hunter Agent:
 
 {suspects}
@@ -48,4 +53,6 @@ Rules:
 - Base the diagnosis on the provided source snippets and triage reasons.
 - If the evidence is weak, say so and set confidence to Low.
 - Do not invent files or functions that are not in the evidence.
+- In Autonomous Scan Mode, phrase the result as a likely risk or potential
+  issue, not as a confirmed runtime failure.
 """
