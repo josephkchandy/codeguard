@@ -23,7 +23,7 @@ class ASTTools:
 
         for node in ast.walk(tree):
 
-            if isinstance(node, ast.FunctionDef):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
 
                 functions.append({
                     "name": node.name,

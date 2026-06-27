@@ -13,7 +13,7 @@ llm = ChatGroq(
 )
 
 
-def ask_groq(prompt):
+def ask_groq(prompt, fallback=None):
 
     response = llm.invoke(prompt)
 
@@ -35,6 +35,8 @@ def ask_groq(prompt):
         return json.loads(content)
 
     except Exception:
+        if fallback is not None:
+            return fallback
 
         return {
             "root_cause": content,

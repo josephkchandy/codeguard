@@ -1,88 +1,106 @@
-# Diagnosis Agent
-import ast
-
 from app.models.state import CodeGuardState
-
 from app.prompts.diagnosis_prompt import DIAGNOSIS_PROMPT
 from app.tools.groq_tools import ask_groq
+from app.tools.source_tools import SourceTools
 
 
-def _extract_function_source(file_path: str, function_name: str, line_number: int):
-    try:
-        with open(file_path, "r", encoding="utf-8") as source_file:
-            source = source_file.read()
+class DiagnosisAgent:
+    role = "LLM-backed root-cause and repair agent"
+    goal = "Explain the bug and propose corrected code using ranked evidence."
+    tools = [
+        "source snippet extractor",
+        "bug hunter triage evidence",
+        "error log context",
+        "Groq/LangChain reasoning model",
+    ]
 
-        tree = ast.parse(source)
+    def __call__(self, state: CodeGuardState):
+        return self.run(state)
 
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                if node.name == function_name and node.lineno == line_number:
-                    return ast.get_source_segment(source, node)
+    def run(self, state: CodeGuardState):
+        suspects = state["suspects"]
+        repository_context = self.build_repository_context(suspects)
+        fallback = self.build_fallback_response(suspects)
 
-        lines = source.splitlines()
-        start = max(line_number - 6, 0)
-        end = min(line_number + 24, len(lines))
-        return "\n".join(lines[start:end])
-
-    except Exception:
-        return ""
-
-
-def _build_repository_context(suspects):
-    snippets = []
-
-    for suspect in suspects[:5]:
-        source = _extract_function_source(
-            suspect["file"],
-            suspect["function"],
-            suspect["line"]
+        prompt = DIAGNOSIS_PROMPT.format(
+            bug_report=state["bug_report"],
+            error_log=state.get("error_log", ""),
+            suspects=suspects,
+            repository_context=repository_context
         )
 
-        if not source:
-            continue
+        diagnosis = ask_groq(prompt, fallback=fallback)
+        diagnosis = self.normalize_diagnosis(diagnosis, fallback)
 
-        snippets.append(
-            "File: {file}\nFunction: {function}\nLine: {line}\nScore: {score}\n```python\n{source}\n```".format(
-                file=suspect["file"],
-                function=suspect["function"],
-                line=suspect["line"],
-                score=suspect["score"],
-                source=source[:2500]
+        return {
+            "diagnosis": diagnosis,
+            "agent_reports": [
+                *state.get("agent_reports", []),
+                {
+                    "agent": "diagnosis",
+                    "role": self.role,
+                    "goal": self.goal,
+                    "tools": self.tools,
+                    "summary": diagnosis.get("root_cause", "Diagnosis unavailable."),
+                }
+            ]
+        }
+
+    def build_repository_context(self, suspects):
+        snippets = []
+
+        for suspect in suspects[:5]:
+            source = SourceTools.extract_function_source(
+                suspect["file"],
+                suspect["function"],
+                suspect["line"]
             )
-        )
 
-    if not snippets:
-        return "No source snippets were available."
+            if not source:
+                continue
 
-    return "\n\n".join(snippets)[:12000]
+            snippets.append(
+                "File: {file}\nFunction: {function}\nLine: {line}\nScore: {score}\nReason: {reason}\nSignals: {signals}\n```python\n{source}\n```".format(
+                    file=suspect["file"],
+                    function=suspect["function"],
+                    line=suspect["line"],
+                    score=suspect["score"],
+                    reason=suspect.get("reason", ""),
+                    signals=", ".join(suspect.get("signals", [])),
+                    source=source[:2500]
+                )
+            )
+
+        return "\n\n".join(snippets)[:12000] or "No source snippets were available."
+
+    def build_fallback_response(self, suspects):
+        primary = suspects[0] if suspects else {}
+
+        return {
+            "root_cause": "The diagnosis agent could not get a valid structured LLM response.",
+            "suggested_fix": "Inspect the top-ranked suspect and rerun analysis with a more specific bug report or stack trace.",
+            "target_file": primary.get("file", ""),
+            "target_function": primary.get("function", ""),
+            "corrected_code": "",
+            "confidence": "Low"
+        }
+
+    def normalize_diagnosis(self, diagnosis, fallback):
+        if not isinstance(diagnosis, dict):
+            return fallback
+
+        return {
+            "root_cause": diagnosis.get("root_cause") or fallback["root_cause"],
+            "suggested_fix": diagnosis.get("suggested_fix") or fallback["suggested_fix"],
+            "target_file": diagnosis.get("target_file") or fallback["target_file"],
+            "target_function": diagnosis.get("target_function") or fallback["target_function"],
+            "corrected_code": diagnosis.get("corrected_code") or fallback["corrected_code"],
+            "confidence": diagnosis.get("confidence") or fallback["confidence"],
+        }
+
+
+diagnosis = DiagnosisAgent()
 
 
 def diagnosis_agent(state: CodeGuardState):
-
-    suspects = state["suspects"]
-
-    bug_report = state["bug_report"]
-
-    error_log = state.get("error_log", "")
-
-    repository_context = _build_repository_context(suspects)
-
-    prompt = DIAGNOSIS_PROMPT.format(
-
-        bug_report=bug_report,
-
-        error_log=error_log,
-
-        suspects=suspects,
-
-        repository_context=repository_context
-
-    )
-
-    diagnosis = ask_groq(prompt)
-
-    return {
-
-        "diagnosis": diagnosis
-
-    }
+    return diagnosis(state)

@@ -708,6 +708,56 @@ button:disabled {
   padding: 16px;
 }
 
+.agent-report-list {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.agent-report {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.agent-report > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.agent-report strong {
+  color: var(--text);
+}
+
+.agent-report span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.agent-report p {
+  color: var(--text);
+  margin: 0;
+}
+
+.tool-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tool-chip {
+  background: rgba(144, 143, 160, 0.1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 11px;
+  padding: 3px 7px;
+}
+
 .pipeline-step {
   align-items: center;
   background: var(--bg);

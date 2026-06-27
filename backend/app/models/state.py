@@ -17,6 +17,8 @@ class CodeGuardState(TypedDict):
 
     diagnosis: Dict[str, Any]
 
+    agent_reports: List[Dict[str, Any]]
+
     generated_tests: List[str]
 
     final_report: Dict[str, Any]

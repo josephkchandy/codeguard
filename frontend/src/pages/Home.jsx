@@ -22,6 +22,7 @@ function Home() {
   const [summary, setSummary] = useState(null);
   const [suspects, setSuspects] = useState([]);
   const [diagnosis, setDiagnosis] = useState(null);
+  const [agentReports, setAgentReports] = useState([]);
   const [history, setHistory] = useState(() => loadSavedHistory());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -80,10 +81,12 @@ function Home() {
       const nextSummary = response.data.summary;
       const nextSuspects = response.data.suspects || [];
       const nextDiagnosis = response.data.diagnosis || {};
+      const nextAgentReports = response.data.agent_reports || [];
 
       setSummary(nextSummary);
       setSuspects(nextSuspects);
       setDiagnosis(nextDiagnosis);
+      setAgentReports(nextAgentReports);
 
       const historyEntry = {
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -94,6 +97,7 @@ function Home() {
         summary: nextSummary,
         suspects: nextSuspects,
         diagnosis: nextDiagnosis,
+        agentReports: nextAgentReports,
         createdAt: new Date().toISOString(),
       };
 
@@ -115,6 +119,7 @@ function Home() {
     setSummary(null);
     setSuspects([]);
     setDiagnosis(null);
+    setAgentReports([]);
     setError("");
     setActiveView("analysis");
   }
@@ -126,6 +131,7 @@ function Home() {
     setSummary(run.summary || null);
     setSuspects(run.suspects || []);
     setDiagnosis(run.diagnosis || null);
+    setAgentReports(run.agentReports || []);
     setError("");
     setActiveView("analysis");
   }
@@ -211,6 +217,7 @@ function Home() {
 
         {activeView === "analysis" && (
           <AnalysisView
+            agentReports={agentReports}
             analysisTitle={analysisTitle}
             bugReport={bugReport}
             confidence={confidence}
@@ -380,6 +387,7 @@ function DashboardView({
 }
 
 function AnalysisView({
+  agentReports,
   analysisTitle,
   analyze,
   bugReport,
@@ -513,6 +521,8 @@ function AnalysisView({
             </div>
           </section>
 
+          <AgentReportsPanel reports={agentReports} />
+
           <DiagnosisPanel
             confidence={confidence}
             confidenceClass={confidenceClass}
@@ -579,6 +589,46 @@ function HistoryView({ clearHistory, history, loadHistoryRun, setActiveView }) {
         </section>
       </section>
     </main>
+  );
+}
+
+function AgentReportsPanel({ reports }) {
+  return (
+    <section className="panel agent-trace-panel">
+      <div className="panel-header">
+        <div>
+          <h3>
+            <span className="material-symbols-outlined">account_tree</span>
+            Agent Trace
+          </h3>
+          <p>{reports.length ? "Role, tools, and summary for each LangGraph agent" : "Agent reports appear after analysis"}</p>
+        </div>
+      </div>
+
+      {reports.length ? (
+        <div className="agent-report-list">
+          {reports.map((report) => (
+            <article className="agent-report" key={report.agent}>
+              <div>
+                <strong>{formatAgentName(report.agent)}</strong>
+                <span>{report.role}</span>
+              </div>
+              <p>{report.summary}</p>
+              <div className="tool-chip-row">
+                {(report.tools || []).map((tool) => (
+                  <span className="tool-chip" key={tool}>{tool}</span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state inline">
+          <span className="material-symbols-outlined">account_tree</span>
+          <p>Run an analysis to inspect the agent trace.</p>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -758,6 +808,14 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function formatAgentName(value = "") {
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function buildActivityData(history) {

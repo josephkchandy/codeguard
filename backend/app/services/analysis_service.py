@@ -21,6 +21,7 @@ class AnalysisService:
                 "repository_map": {},
                 "suspects": [],
                 "diagnosis": {},
+                "agent_reports": [],
                 "generated_tests": [],
                 "final_report": {}
             }
@@ -46,7 +47,8 @@ class AnalysisService:
                     "classes": class_count
                 },
                 "suspects": result["suspects"],
-                "diagnosis": result["diagnosis"]
+                "diagnosis": result["diagnosis"],
+                "agent_reports": result.get("agent_reports", [])
             }
 
         finally:
