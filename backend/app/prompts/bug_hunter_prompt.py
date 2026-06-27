@@ -25,6 +25,9 @@ Candidate functions from static tools:
 Source evidence:
 {source_context}
 
+Agent tool observations:
+{agent_observations}
+
 Return ONLY a valid JSON object.
 Do NOT wrap the JSON in markdown.
 Do NOT use ```json.

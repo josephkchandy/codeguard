@@ -770,6 +770,51 @@ button:disabled {
   margin: 0;
 }
 
+.agent-action-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agent-action {
+  align-items: start;
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 9px;
+}
+
+.agent-action .material-symbols-outlined {
+  color: var(--primary-text);
+  font-size: 18px;
+  margin-top: 1px;
+}
+
+.agent-action div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agent-action strong {
+  color: var(--primary-text);
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.agent-action small {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.agent-action p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 .tool-chip-row {
   display: flex;
   flex-wrap: wrap;

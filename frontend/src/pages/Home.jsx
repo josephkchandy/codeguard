@@ -667,6 +667,20 @@ function AgentReportsPanel({ reports }) {
                 <span>{report.role}</span>
               </div>
               <p>{report.summary}</p>
+              {Array.isArray(report.actions) && report.actions.length > 0 && (
+                <div className="agent-action-list">
+                  {report.actions.map((action, index) => (
+                    <div className="agent-action" key={`${action.tool}-${action.file}-${action.function}-${index}`}>
+                      <span className="material-symbols-outlined">build</span>
+                      <div>
+                        <strong>{action.tool}</strong>
+                        <small>{action.function ? `${action.function} in ${action.file}` : action.file}</small>
+                        {action.reason && <p>{action.reason}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="tool-chip-row">
                 {(report.tools || []).map((tool) => (
                   <span className="tool-chip" key={tool}>{tool}</span>

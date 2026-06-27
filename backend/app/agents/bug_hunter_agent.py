@@ -24,6 +24,8 @@ class BugHunterAgent:
 
     def run(self, state: CodeGuardState):
         candidates = self.collect_candidates(state)
+        actions = self.plan_actions(state, candidates)
+        observations = self.execute_actions(actions, candidates)
         source_context = self.build_source_context(candidates)
         fallback = self.build_fallback_response(candidates)
 
@@ -31,7 +33,8 @@ class BugHunterAgent:
             bug_report=state["bug_report"],
             error_log=state.get("error_log", ""),
             candidates=json.dumps(candidates[:12], indent=2),
-            source_context=source_context
+            source_context=source_context,
+            agent_observations=json.dumps(observations, indent=2)
         )
 
         triage = ask_groq(prompt, fallback=fallback)
@@ -47,9 +50,143 @@ class BugHunterAgent:
                     "goal": self.goal,
                     "tools": self.tools,
                     "summary": triage.get("triage_summary", fallback["triage_summary"]),
+                    "actions": actions,
+                    "observations": observations,
                 }
             ]
         }
+
+    def plan_actions(self, state: CodeGuardState, candidates):
+        fallback = {
+            "thought": "Inspect the highest-ranked static candidates before final triage.",
+            "actions": [
+                {
+                    "tool": "inspect_source",
+                    "file": candidate["file"],
+                    "function": candidate["function"],
+                    "line": candidate["line"],
+                    "reason": "Top static candidate."
+                }
+                for candidate in candidates[:3]
+            ]
+        }
+
+        prompt = """
+You are CodeGuard's Bug Hunter Agent.
+
+Before final triage, choose which tools to use.
+
+Available tools:
+- inspect_source: inspect a candidate function's source code.
+- inspect_static_signals: inspect static ranking signals for a candidate.
+
+Bug Report:
+{bug_report}
+
+Error Log:
+{error_log}
+
+Candidates:
+{candidates}
+
+Return ONLY valid JSON:
+{{
+  "thought": "...",
+  "actions": [
+    {{
+      "tool": "inspect_source | inspect_static_signals",
+      "file": "...",
+      "function": "...",
+      "line": 1,
+      "reason": "..."
+    }}
+  ]
+}}
+
+Rules:
+- Choose at most 4 actions.
+- Only choose tools from the available tools list.
+- Only target files/functions from the candidates list.
+""".format(
+            bug_report=state.get("bug_report", ""),
+            error_log=state.get("error_log", ""),
+            candidates=json.dumps(candidates[:10], indent=2)
+        )
+
+        plan = ask_groq(prompt, fallback=fallback)
+        actions = plan.get("actions") if isinstance(plan, dict) else None
+
+        if not isinstance(actions, list):
+            return fallback["actions"]
+
+        valid_actions = []
+        candidate_keys = {
+            (candidate["file"], candidate["function"], candidate["line"])
+            for candidate in candidates
+        }
+
+        for action in actions[:4]:
+            if not isinstance(action, dict):
+                continue
+
+            key = (
+                action.get("file", ""),
+                action.get("function", ""),
+                int(action.get("line") or 0)
+            )
+
+            if action.get("tool") not in {"inspect_source", "inspect_static_signals"}:
+                continue
+
+            if key not in candidate_keys:
+                continue
+
+            valid_actions.append({
+                "tool": action["tool"],
+                "file": key[0],
+                "function": key[1],
+                "line": key[2],
+                "reason": action.get("reason", ""),
+            })
+
+        return valid_actions or fallback["actions"]
+
+    def execute_actions(self, actions, candidates):
+        candidate_index = {
+            (candidate["file"], candidate["function"], candidate["line"]): candidate
+            for candidate in candidates
+        }
+        observations = []
+
+        for action in actions:
+            key = (action["file"], action["function"], action["line"])
+            candidate = candidate_index.get(key, {})
+
+            if action["tool"] == "inspect_source":
+                result = SourceTools.extract_function_source(
+                    action["file"],
+                    action["function"],
+                    action["line"]
+                )[:2200]
+            else:
+                result = {
+                    "score": candidate.get("score", 0),
+                    "signals": candidate.get("signals", []),
+                    "static_reason": candidate.get("reason", ""),
+                }
+
+            observations.append({
+                "tool": action["tool"],
+                "target": {
+                    "file": action["file"],
+                    "function": action["function"],
+                    "line": action["line"],
+                },
+                "reason": action.get("reason", ""),
+                "result": result,
+            })
+
+        return observations
 
     def collect_candidates(self, state: CodeGuardState):
         keywords = BugTools.tokenize(

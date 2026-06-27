@@ -28,6 +28,9 @@ These are the most suspicious functions from the Bug Hunter Agent:
 Relevant source snippets:
 {repository_context}
 
+Agent tool observations:
+{agent_observations}
+
 Analyze the bug and propose a corrected version of the most relevant function
 or code block. The corrected code should be directly useful to the developer,
 not a vague instruction.
