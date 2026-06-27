@@ -714,6 +714,34 @@ button:disabled {
   padding: 16px;
 }
 
+.scanner-intelligence {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.chip-group {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.chip-group > span {
+  color: var(--primary-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.chip-group > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .agent-report {
   background: var(--bg);
   border: 1px solid var(--border);

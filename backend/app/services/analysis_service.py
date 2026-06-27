@@ -19,6 +19,7 @@ class AnalysisService:
                 "error_log": error_log,
                 "python_files": [],
                 "repository_map": {},
+                "scanner_intelligence": {},
                 "suspects": [],
                 "diagnosis": {},
                 "agent_reports": [],
@@ -46,6 +47,7 @@ class AnalysisService:
                     "functions": function_count,
                     "classes": class_count
                 },
+                "scanner_intelligence": result.get("scanner_intelligence", {}),
                 "suspects": result["suspects"],
                 "diagnosis": result["diagnosis"],
                 "agent_reports": result.get("agent_reports", [])

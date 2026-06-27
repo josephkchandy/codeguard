@@ -23,6 +23,7 @@ function Home() {
   const [suspects, setSuspects] = useState([]);
   const [diagnosis, setDiagnosis] = useState(null);
   const [agentReports, setAgentReports] = useState([]);
+  const [scannerIntelligence, setScannerIntelligence] = useState(null);
   const [history, setHistory] = useState(() => loadSavedHistory());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -82,11 +83,13 @@ function Home() {
       const nextSuspects = response.data.suspects || [];
       const nextDiagnosis = response.data.diagnosis || {};
       const nextAgentReports = response.data.agent_reports || [];
+      const nextScannerIntelligence = response.data.scanner_intelligence || null;
 
       setSummary(nextSummary);
       setSuspects(nextSuspects);
       setDiagnosis(nextDiagnosis);
       setAgentReports(nextAgentReports);
+      setScannerIntelligence(nextScannerIntelligence);
 
       const historyEntry = {
         id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -98,6 +101,7 @@ function Home() {
         suspects: nextSuspects,
         diagnosis: nextDiagnosis,
         agentReports: nextAgentReports,
+        scannerIntelligence: nextScannerIntelligence,
         createdAt: new Date().toISOString(),
       };
 
@@ -120,6 +124,7 @@ function Home() {
     setSuspects([]);
     setDiagnosis(null);
     setAgentReports([]);
+    setScannerIntelligence(null);
     setError("");
     setActiveView("analysis");
   }
@@ -132,6 +137,7 @@ function Home() {
     setSuspects(run.suspects || []);
     setDiagnosis(run.diagnosis || null);
     setAgentReports(run.agentReports || []);
+    setScannerIntelligence(run.scannerIntelligence || null);
     setError("");
     setActiveView("analysis");
   }
@@ -208,6 +214,7 @@ function Home() {
             dashboardStats={dashboardStats}
             diagnosis={diagnosis}
             history={history}
+            scannerIntelligence={scannerIntelligence}
             setActiveView={setActiveView}
             summary={summary}
             suspects={suspects}
@@ -256,6 +263,7 @@ function DashboardView({
   diagnosis,
   history,
   loadHistoryRun,
+  scannerIntelligence,
   setActiveView,
   summary,
   suspects,
@@ -336,6 +344,8 @@ function DashboardView({
               <MiniStat label="Suspects" value={suspects.length || "--"} />
             </div>
           </section>
+
+          <ScannerIntelligencePanel intelligence={scannerIntelligence} />
 
           <section className="panel">
             <div className="panel-header">
@@ -589,6 +599,54 @@ function HistoryView({ clearHistory, history, loadHistoryRun, setActiveView }) {
         </section>
       </section>
     </main>
+  );
+}
+
+function ScannerIntelligencePanel({ intelligence }) {
+  return (
+    <section className="panel scanner-intelligence-panel">
+      <div className="panel-header">
+        <div>
+          <h3>
+            <span className="material-symbols-outlined">travel_explore</span>
+            Scanner Intelligence
+          </h3>
+          <p>{intelligence ? "LLM repository scan summary" : "Run an analysis to populate scanner intelligence"}</p>
+        </div>
+      </div>
+
+      {intelligence ? (
+        <div className="scanner-intelligence">
+          <ResultBlock label="Architecture" value={intelligence.architecture_summary} />
+          <ResultBlock label="Scan Strategy" value={intelligence.scan_strategy} />
+          <ChipGroup label="Frameworks" values={intelligence.detected_frameworks} />
+          <ChipGroup label="Entrypoints" values={intelligence.entrypoints} />
+          <ChipGroup label="Risk Areas" values={intelligence.risk_areas} />
+        </div>
+      ) : (
+        <div className="empty-state inline">
+          <span className="material-symbols-outlined">travel_explore</span>
+          <p>The scanner agent will summarize architecture, frameworks, entrypoints, and risk areas.</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ChipGroup({ label, values = [] }) {
+  const normalizedValues = Array.isArray(values) ? values.filter(Boolean) : [];
+
+  if (!normalizedValues.length) return null;
+
+  return (
+    <div className="chip-group">
+      <span>{label}</span>
+      <div>
+        {normalizedValues.map((value) => (
+          <span className="tool-chip" key={value}>{value}</span>
+        ))}
+      </div>
+    </div>
   );
 }
 

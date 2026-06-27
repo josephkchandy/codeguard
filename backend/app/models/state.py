@@ -13,6 +13,8 @@ class CodeGuardState(TypedDict):
 
     repository_map: Dict[str, Any]
 
+    scanner_intelligence: Dict[str, Any]
+
     suspects: List[Dict[str, Any]]
 
     diagnosis: Dict[str, Any]
